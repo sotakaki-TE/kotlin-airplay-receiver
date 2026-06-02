@@ -22,6 +22,21 @@ TCL-specific variant.
 Start with `720p` if the connection is unstable. Use `1080p` for photos,
 documents, and slides once the basic test works.
 
+## Install The TCL Variant
+
+After the compatibility test, install `dist/Receiver-TCL-65C646.apk`.
+
+1. Uninstall the existing `Receiver` app from the TV. The test APK and TCL APK
+   may use different ad hoc signing keys, so an in-place update may fail.
+2. Download or transfer `dist/Receiver-TCL-65C646.apk` to the TV.
+3. Open the APK and install it.
+4. Launch `AirPlay Receiver`.
+
+The TCL build defaults to `1080p`, supports Android TV launcher discovery and
+remote focus navigation, and returns to its waiting screen when mirroring
+stops. This allows another local video to be played without relaunching the
+app.
+
 ## Expected Limitations
 
 - DRM-protected video services may display a black screen.
