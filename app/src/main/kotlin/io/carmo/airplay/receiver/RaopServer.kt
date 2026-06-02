@@ -83,6 +83,9 @@ class RaopServer(
             duplicate.position(0)
             duplicate.limit(size)
             duplicate.get(copy)
+            if (hasStartedVideo && cachedCodecConfig != null) {
+                restartPlayersForVideoSwitch()
+            }
             cachedCodecConfig = copy
             Log.i(TAG, "cached SPS/PPS (size=$size) for replay")
         }
@@ -123,7 +126,7 @@ class RaopServer(
             pts = pts,
             receivedAtMs = SystemClock.elapsedRealtime()
         )
-        val player = audioPlayer
+        val player = ensureAudioPlayer()
         if (player == null) {
             packet.release()
             return
@@ -213,6 +216,7 @@ class RaopServer(
     private external fun getPort(serverId: Long): Int
 
     private fun markMediaTraffic() {
+        mainHandler.removeCallbacks(confirmStreamStopped)
         lastMediaPacketAtMs = SystemClock.elapsedRealtime()
         if (!hasConnection) {
             hasConnection = true
@@ -232,6 +236,7 @@ class RaopServer(
 
     private fun resetStreamPlayback() {
         stopVideoPlayer()
+        restartAudioPlayer()
         hasConnection = false
         hasStartedVideo = false
         firstVideoBytesAtMs = 0L
@@ -248,12 +253,37 @@ class RaopServer(
         mainHandler.postDelayed(confirmStreamStopped, thresholdMs)
     }
 
-    private fun ensureAudioPlayer() {
+    private fun ensureAudioPlayer(): AudioPlayer? {
         if (audioPlayer == null) {
             audioPlayer = AudioPlayer(audioVolume, onLatencySample).also { it.start() }
         } else {
             audioPlayer?.setVolume(audioVolume)
         }
+        return audioPlayer
+    }
+
+    private fun restartPlayersForVideoSwitch() {
+        mainHandler.removeCallbacks(confirmStreamStopped)
+        mainHandler.removeCallbacks(startupWatchdog)
+        stopVideoPlayer()
+        restartAudioPlayer()
+        hasStartedVideo = false
+        firstVideoBytesAtMs = 0L
+        firstAudioBytesAtMs = 0L
+        lastVideoStatusAtMs = 0L
+    }
+
+    private fun restartAudioPlayer() {
+        audioPlayer?.let { player ->
+            player.stopPlay()
+            try {
+                player.join(AUDIO_RESTART_TIMEOUT_MS)
+            } catch (_: InterruptedException) {
+                Thread.currentThread().interrupt()
+            }
+        }
+        audioPlayer = null
+        ensureAudioPlayer()
     }
 
     @Synchronized
@@ -351,6 +381,7 @@ class RaopServer(
         private const val DEBUG_FRAMES = false
         private const val MIN_AUDIO_VOLUME = 0.0f
         private const val MAX_AUDIO_VOLUME = 1.0f
+        private const val AUDIO_RESTART_TIMEOUT_MS = 500L
         private const val VIDEO_RESTART_TIMEOUT_MS = 500L
         private const val STREAM_STOP_GRACE_MS = 5_000L
         private const val VIDEO_STATUS_INTERVAL_MS = 1_000L
