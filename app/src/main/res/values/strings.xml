@@ -1,8 +1,8 @@
 <resources>
-    <string name="app_name">Receiver</string>
+    <string name="app_name">AirPlay Receiver</string>
     <string name="notification_channel_receiver">Receiver status</string>
     <string name="notification_receiver_active">AirPlay receiver is active</string>
-    <string name="startup_title">Receiver</string>
+    <string name="startup_title">AirPlay Receiver</string>
     <string name="video_mode_label">Stream resolution</string>
     <string name="video_mode_720p">720p</string>
     <string name="video_mode_1080p">1080p</string>

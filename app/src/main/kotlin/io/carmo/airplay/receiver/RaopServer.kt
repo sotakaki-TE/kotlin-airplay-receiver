@@ -225,8 +225,21 @@ class RaopServer(
         }
         val lastPacketAgeMs = SystemClock.elapsedRealtime() - lastMediaPacketAtMs
         if (lastPacketAgeMs >= streamStopThresholdMs) {
+            resetStreamPlayback()
             onStreamStoppedCallback.invoke()
         }
+    }
+
+    private fun resetStreamPlayback() {
+        stopVideoPlayer()
+        hasConnection = false
+        hasStartedVideo = false
+        firstVideoBytesAtMs = 0L
+        firstAudioBytesAtMs = 0L
+        lastMediaPacketAtMs = 0L
+        lastVideoStatusAtMs = 0L
+        cachedCodecConfig = null
+        onStreamStatusChanged("Receiver ready")
     }
 
     private fun scheduleStreamStopCheck(thresholdMs: Long) {

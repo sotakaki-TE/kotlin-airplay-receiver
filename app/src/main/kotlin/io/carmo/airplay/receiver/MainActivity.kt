@@ -45,7 +45,7 @@ class MainActivity : Activity() {
     private var screenWakeLock: PowerManager.WakeLock? = null
     private var wakeNudgeLock: PowerManager.WakeLock? = null
     private var multicastLock: WifiManager.MulticastLock? = null
-    private var videoMode = VideoMode.HD
+    private var videoMode = VideoMode.FULL_HD
     private var wakeMode = WakeMode.WAKE_ON_ACTIVITY
     private var audioVolume = DEFAULT_AUDIO_VOLUME
     @Volatile private var lastWakeNudgeAtMs = 0L
@@ -106,6 +106,7 @@ class MainActivity : Activity() {
         configureVideoModeControl()
         configureWakeModeControl()
         configureAudioControls()
+        videoModeGroup.findViewById<View>(videoMode.radioButtonId).requestFocus()
         showWaitingStatus()
 
         if (DEBUG_CODECS) {
@@ -422,7 +423,7 @@ class MainActivity : Activity() {
     private fun loadVideoMode(): VideoMode {
         val preferences = getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
         return VideoMode.fromPreferenceValue(preferences.getString(PREFERENCE_VIDEO_MODE_V2, null))
-            ?: VideoMode.HD
+            ?: VideoMode.FULL_HD
     }
 
     private fun saveVideoMode(mode: VideoMode) {
@@ -532,8 +533,9 @@ class MainActivity : Activity() {
 
     private fun handleStreamStopped() {
         runOnUiThread {
-            if (!isFinishing) {
-                finishAndRemoveTask()
+            if (!isFinishing && !isDestroyed) {
+                showWaitingStatus()
+                refreshAnnouncements()
             }
         }
     }
